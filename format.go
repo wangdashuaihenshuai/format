@@ -19,6 +19,7 @@ type BasicType struct {
 	DefaultValue interface{}   `json:"defaultValue"`
 	Rename       string        `json:"rename"`
 	EnumFunc     func(data interface{}) bool
+	EnumStr      string
 
 	Match     *Match         `json:"match"`
 	Select    string         `json:"select"`
@@ -90,6 +91,12 @@ func (vf *ValueFormat) Init() error {
 			}
 			EnumMap[value] = true
 		}
+
+		bs, err := json.Marshal(vf.Enum)
+		if err != nil {
+			return err
+		}
+		vf.Enum = string(bs)
 
 		vf.EnumFunc = func(data interface{}) bool {
 			_, ok := EnumMap[data]
@@ -205,7 +212,7 @@ func FormatEnum(format *ValueFormat, data interface{}) error {
 	}
 	exist := format.EnumFunc(data)
 	if !exist {
-		return errors.New(" value is not in Enum")
+		return fmt.Errorf(" value is not in Enum %s", format.EnumStr)
 	}
 	return nil
 }
