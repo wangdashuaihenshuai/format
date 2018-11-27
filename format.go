@@ -96,7 +96,7 @@ func (vf *ValueFormat) Init() error {
 		if err != nil {
 			return err
 		}
-		vf.Enum = string(bs)
+		vf.EnumStr = string(bs)
 
 		vf.EnumFunc = func(data interface{}) bool {
 			_, ok := EnumMap[data]
