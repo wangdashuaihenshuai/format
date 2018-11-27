@@ -23,7 +23,7 @@ type BasicType struct {
 	Match     *Match         `json:"match"`
 	Select    string         `json:"select"`
 	Formats   []*ValueFormat `json:"formats"`
-	MatchFunc func(data interface{}) (*ValueFormat, error)
+	MatchFunc func(parent interface{}, data interface{}) (*ValueFormat, error)
 }
 
 type MapType struct {
@@ -111,15 +111,30 @@ func (vf *ValueFormat) Init() error {
 		return errors.New(" select or formats config error")
 	}
 
-	var selectFunc func(data interface{}) (interface{}, error)
+	var selectFunc func(parent interface{}, data interface{}) (interface{}, error)
 	if vf.Select == "" {
-		selectFunc = func(data interface{}) (interface{}, error) {
+		selectFunc = func(parent interface{}, data interface{}) (interface{}, error) {
 			return data, nil
 		}
 	} else {
 		names := strings.Split(vf.Select, "->")
-		selectFunc = func(data interface{}) (interface{}, error) {
-			return GetMapValueByNames(data, names)
+		namesLength := len(names)
+		dataName := "data"
+
+		if namesLength > 1 {
+			dataName = names[0]
+			names = names[1:]
+		}
+
+		selectFunc = func(parent interface{}, data interface{}) (interface{}, error) {
+			switch dataName {
+			case "data":
+				return GetMapValueByNames(data, names)
+			case "parent":
+				return GetMapValueByNames(parent, names)
+			default:
+				return nil, fmt.Errorf(" select data key %s not find", dataName)
+			}
 		}
 	}
 
@@ -145,8 +160,8 @@ func (vf *ValueFormat) Init() error {
 		return errors.New(" match map is empty")
 	}
 
-	vf.MatchFunc = func(data interface{}) (*ValueFormat, error) {
-		value, err := selectFunc(data)
+	vf.MatchFunc = func(parent interface{}, data interface{}) (*ValueFormat, error) {
+		value, err := selectFunc(parent, data)
 		if err != nil {
 			return nil, err
 		}
@@ -163,7 +178,7 @@ func TypeError(expect string, _type string) error {
 	return fmt.Errorf(" expect type %s but %s", expect, _type)
 }
 
-func (vf *ValueFormat) MatchFormat(data interface{}) (*ValueFormat, error) {
+func (vf *ValueFormat) MatchFormat(parent interface{}, data interface{}) (*ValueFormat, error) {
 	length := len(vf.Formats)
 	if length == 0 {
 		return vf, nil
@@ -174,7 +189,7 @@ func (vf *ValueFormat) MatchFormat(data interface{}) (*ValueFormat, error) {
 	if vf.MatchFunc == nil {
 		return nil, errors.New(" lack of match function")
 	}
-	return vf.MatchFunc(data)
+	return vf.MatchFunc(parent, data)
 }
 
 func FormatTypes(format *ValueFormat, _type string) error {
@@ -241,7 +256,7 @@ func (vf *ValueFormat) ArrayFormat(data []interface{}, format *ValueFormat) (int
 
 	res := make([]interface{}, 0, len(data))
 	for i, d := range data {
-		value, err := format.Format.format(d)
+		value, err := format.Format.format(data, d)
 		if err != nil {
 			return nil, fmt.Errorf(".$%d%s", i, err.Error())
 		}
@@ -271,7 +286,7 @@ func (vf *ValueFormat) MapFormat(data map[string]interface{}, format *ValueForma
 			}
 			res[key] = filedFormat.DefaultValue
 		} else {
-			value, err := filedFormat.format(oldValue)
+			value, err := filedFormat.format(data, oldValue)
 			if err != nil {
 				return nil, fmt.Errorf(".%s%s", oldKey, err.Error())
 			}
@@ -282,11 +297,11 @@ func (vf *ValueFormat) MapFormat(data map[string]interface{}, format *ValueForma
 }
 
 func (vf *ValueFormat) FormatData(data interface{}) (interface{}, error) {
-	return vf.format(data)
+	return vf.format(data, data)
 }
 
-func (vf *ValueFormat) format(data interface{}) (interface{}, error) {
-	format, err := vf.MatchFormat(data)
+func (vf *ValueFormat) format(parent interface{}, data interface{}) (interface{}, error) {
+	format, err := vf.MatchFormat(parent, data)
 	if err != nil {
 		return nil, err
 	}
