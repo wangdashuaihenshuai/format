@@ -97,10 +97,7 @@ func (vf *ValueFormat) Init() error {
 		}
 	}
 
-	if vf.Optional {
-		if vf.DefaultValue == nil {
-			return errors.New(" use optional need set default value")
-		}
+	if vf.DefaultValue != nil {
 		err := expectType(vf.DefaultValue, vf.Type)
 		if err != nil {
 			return fmt.Errorf(" defaultValue type error: %s", err.Error())
@@ -281,10 +278,12 @@ func (vf *ValueFormat) MapFormat(data map[string]interface{}, format *ValueForma
 			key = filedFormat.Rename
 		}
 		if !ok {
-			if !filedFormat.Optional {
+			if !filedFormat.Optional && filedFormat.DefaultValue == nil {
 				return nil, fmt.Errorf(".%s not exists", key)
 			}
-			res[key] = filedFormat.DefaultValue
+			if filedFormat.DefaultValue != nil {
+				res[key] = filedFormat.DefaultValue
+			}
 		} else {
 			value, err := filedFormat.format(data, oldValue)
 			if err != nil {

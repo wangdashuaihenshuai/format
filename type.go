@@ -19,6 +19,23 @@ var TYPES = []string{
 	ARRAY,
 }
 
+func getTypeDefaultValue(_type string) interface{} {
+	switch _type {
+	case STRING:
+		return ""
+	case NUMBER:
+		return 0
+	case BOOL:
+		return false
+	case ARRAY:
+		return make([]interface{}, 0, 0)
+	case MAP:
+		return make(map[string]interface{}, 0)
+	default:
+		return nil
+	}
+}
+
 func typeOf(data interface{}) string {
 	switch data.(type) {
 	case string:

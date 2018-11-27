@@ -311,30 +311,7 @@ func TestFomaterRenameSuccess(t *testing.T) {
 	}
 }
 
-func TestNewFomaterOptionalError(t *testing.T) {
-	formatStr := `{
-		"type": "map",
-		"fields": {
-			"n": {
-				"type": "number",
-				"optional": true
-			},
-			"b": {
-				"type": "bool"
-			},
-			"s": {
-				"type": "string"
-			}
-		}
-	}`
-	_, err := NewFormater(formatStr)
-	fmt.Println(err)
-	if err == nil {
-		t.Error(err.Error())
-		return
-	}
-}
-func TestFomaterOptionalSuccess(t *testing.T) {
+func TestFomaterDefaultValueSuccess(t *testing.T) {
 	formatStr := `{
 		"type": "map",
 		"fields": {
@@ -346,7 +323,6 @@ func TestFomaterOptionalSuccess(t *testing.T) {
 			},
 			"s": {
 				"type": "string",
-				"optional": true,
 				"defaultValue": "11"
 			}
 		}
@@ -374,6 +350,45 @@ func TestFomaterOptionalSuccess(t *testing.T) {
 	}
 	if r.(string) != "11" {
 		t.Error("set default value error")
+		return
+	}
+}
+
+func TestFomaterOptionalSuccess(t *testing.T) {
+	formatStr := `{
+		"type": "map",
+		"fields": {
+			"n": {
+				"type": "number"
+			},
+			"b": {
+				"type": "bool"
+			},
+			"s": {
+				"type": "string",
+				"optional": true
+			}
+		}
+	}`
+	f, err := NewFormater(formatStr)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	data := map[string]interface{}{"n": 11, "b": true}
+	newData, err := f.FormatData(data)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	newMap, ok := newData.(map[string]interface{})
+	if !ok {
+		t.Error("return new Data is not map")
+		return
+	}
+	_, ok = newMap["s"]
+	if ok {
+		t.Error("optional true error")
 		return
 	}
 }

@@ -24,3 +24,7 @@ func GetMapValueByNames(m interface{}, names []string) (interface{}, error) {
 	}
 	return selectValue, err
 }
+
+func GetTypeDefualtValue(_type string) interface{} {
+	return nil
+}
