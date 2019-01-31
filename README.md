@@ -146,3 +146,7 @@ true
   "enum": ["1", "2", "3"]
 }
 ```
+
+# FAQ
+
+1. YAML 转为 golang json map 类型为 map[interface{}]interface{} 会出现格式化错误问题，需要将 YAML 转为 JSON 格式，之后转为 golang json 才可以。
