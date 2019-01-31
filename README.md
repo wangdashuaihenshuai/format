@@ -44,21 +44,21 @@ go test
 
 ```json
 {
-		"type": "map",
-		"fields": {
-			"n": {
-				"type": "number",
-				"optional": true,
-				"default": 11
-			},
-			"b": {
-				"type": "bool"
-			},
-			"s": {
-				"type": "string"
-			}
-		}
-	}
+	"type": "map",
+  "fields": {
+    "n": {
+      "type": "number",
+      "optional": true,
+      "default": 11
+    },
+    "b": {
+      "type": "bool"
+    },
+    "s": {
+      "type": "string"
+    }
+  }
+}
 ```
 
 ### Array
@@ -125,7 +125,7 @@ true
 
 ```json
 {
-  "type": "number"
+  "type": "number",
   "enum": [1,2,3]
 }
 ```
