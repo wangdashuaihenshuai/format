@@ -195,7 +195,7 @@ func TestNewFomaterDefaultValueError(t *testing.T) {
 			"n": {
 				"type": "number",
 				"optional": true,
-				"defaultValue": "11"
+				"default": "11"
 			},
 			"b": {
 				"type": "bool"
@@ -323,7 +323,7 @@ func TestFomaterDefaultValueSuccess(t *testing.T) {
 			},
 			"s": {
 				"type": "string",
-				"defaultValue": "11"
+				"default": "11"
 			}
 		}
 	}`

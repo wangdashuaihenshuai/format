@@ -16,7 +16,7 @@ type BasicType struct {
 	Type         string        `json:"type"`
 	Enum         []interface{} `json:"enum"`
 	Optional     bool          `json:"optional"`
-	DefaultValue interface{}   `json:"defaultValue"`
+	DefaultValue interface{}   `json:"default"`
 	Rename       string        `json:"rename"`
 	EnumFunc     func(data interface{}) bool
 	EnumStr      string
@@ -303,7 +303,11 @@ func (vf *ValueFormat) MapFormat(data map[string]interface{}, format *ValueForma
 }
 
 func (vf *ValueFormat) FormatData(data interface{}) (interface{}, error) {
-	return vf.format(data, data)
+	res, err := vf.format(data, data)
+	if err != nil {
+		return nil, fmt.Errorf("data%s", err.Error())
+	}
+	return res, nil
 }
 
 func (vf *ValueFormat) format(parent interface{}, data interface{}) (interface{}, error) {
