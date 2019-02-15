@@ -67,6 +67,7 @@ go test
 
 - type "array"
 - format Format 格式化配置
+- ?isFilter 过滤格式化错误数据
 
 ```json
 [
@@ -100,7 +101,8 @@ go test
 
 类型 `bool`
 
-- type "bool"
+- type      "bool"
+- ?toString bool 类型转换为string
 
 ```json
 true
@@ -118,6 +120,7 @@ true
 
 - type "number"
 - ?enum 数字枚举
+- ?toString bool 类型转换为string
 
 ```json
 1
