@@ -34,7 +34,7 @@ func TestNewFomaterSelectError(t *testing.T) {
 					"method": "equal",
 					"value": "test"
 				},
-				"type": "number"
+				"type": "string"
 			}
 		]
 	}`
@@ -45,10 +45,149 @@ func TestNewFomaterSelectError(t *testing.T) {
 	}
 }
 
+// formats success
+func TestNewFomaterSelectSucess(t *testing.T) {
+	formatStr := `{
+		"type": "map",
+		"select": "data->test",
+		"formats": [
+			{
+				"match": {
+					"method": "equal",
+					"value": "test"
+				},
+				"type": "map",
+				"fields": {
+					"n": {
+						"type": "number"
+					}
+				}	
+			}
+		]
+	}`
+	f, err := NewFormater(formatStr)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	data := map[string]interface{}{"n": true, "test": "test"}
+	_, err = f.FormatData(data)
+	fmt.Println(err)
+	if err == nil {
+		t.Error("error......")
+	}
+}
+
+// formats success
+func TestNewFomaterSelectEmpty(t *testing.T) {
+	formatStr := `{
+		"type": "array",
+		"format": {
+			"type": "map",
+			"select": "data->test",
+			"formats": [
+				{
+					"match": {
+						"method": "equal",
+						"value": "test"
+					},
+					"type": "map",
+					"fields": {
+						"n": {
+							"type": "number"
+						}
+					}	
+				}
+			]
+		}
+	}`
+	f, err := NewFormater(formatStr)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	m1 := map[string]interface{}{"n": 1, "test": "test"}
+	data := []interface{}{m1, m1}
+	_, err = f.FormatData(data)
+	if err != nil {
+		t.Error(err.Error())
+	}
+}
+
+func TestNewFomaterSelectMatchError(t *testing.T) {
+	formatStr := `{
+		"type": "array",
+		"format": {
+			"type": "map",
+			"select": "data->test",
+			"formats": [
+				{
+					"match": {
+						"method": "equal",
+						"value": "t"
+					},
+					"type": "map",
+					"fields": {
+						"n": {
+							"type": "number"
+						}
+					}	
+				}
+			]
+		}
+	}`
+	f, err := NewFormater(formatStr)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	m1 := map[string]interface{}{"n": 1, "test": "test"}
+	data := []interface{}{m1, m1}
+	_, err = f.FormatData(data)
+	if err == nil {
+		t.Error("match formater emtpy error")
+	}
+}
+
+func TestNewFomaterSelectMatchFilterSuccess(t *testing.T) {
+	formatStr := `{
+		"type": "array",
+		"isFilter": true,
+		"format": {
+			"type": "map",
+			"select": "data->test",
+			"formats": [
+				{
+					"match": {
+						"method": "equal",
+						"value": "t"
+					},
+					"type": "map",
+					"fields": {
+						"n": {
+							"type": "number"
+						}
+					}	
+				}
+			]
+		}
+	}`
+	f, err := NewFormater(formatStr)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	m1 := map[string]interface{}{"n": 1, "test": "test"}
+	m2 := map[string]interface{}{"n": 2, "test": "t"}
+	data := []interface{}{m1, m2}
+	r, err := f.FormatData(data)
+	if err != nil || len(r.([]interface{})) != 1 {
+		t.Error("filter array error")
+	}
+}
 func TestNewFomaterMatchError(t *testing.T) {
 	formatStr := `{
 		"type": "number",
-		"select": "test",
 		"formats": [
 			{
 				"type": "number"

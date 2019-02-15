@@ -13,14 +13,15 @@ type Match struct {
 }
 
 type BasicType struct {
-	Type         string        `json:"type"`
-	Enum         []interface{} `json:"enum"`
-	Optional     bool          `json:"optional"`
-	DefaultValue interface{}   `json:"default"`
-	Rename       string        `json:"rename"`
-	EnumFunc     func(data interface{}) bool
-	EnumStr      string
+	Type string `json:"type"`
 
+	// string and number
+	Enum     []interface{} `json:"enum"`
+	EnumFunc func(data interface{}) bool
+	EnumStr  string
+
+	// map and array
+	IsFilter  bool           `json:"isFilter"`
 	Match     *Match         `json:"match"`
 	Select    string         `json:"select"`
 	Formats   []*ValueFormat `json:"formats"`
@@ -28,8 +29,10 @@ type BasicType struct {
 }
 
 type MapType struct {
-	IsFilter bool                    `json:"isFilter"`
-	Fields   map[string]*ValueFormat `json:"fields"`
+	Optional     bool                    `json:"optional"`
+	DefaultValue interface{}             `json:"default"`
+	Rename       string                  `json:"rename"`
+	Fields       map[string]*ValueFormat `json:"fields"`
 }
 
 type ArrayType struct {
@@ -66,7 +69,7 @@ func (vf *ValueFormat) Init() error {
 	for i, f := range vf.Formats {
 		err := f.Init()
 		if err != nil {
-			return fmt.Errorf(".formats.$%d%s", i, err.Error())
+			return fmt.Errorf(".formats.[%d]%s", i, err.Error())
 		}
 	}
 	for name, f := range vf.Fields {
@@ -143,7 +146,7 @@ func (vf *ValueFormat) Init() error {
 	}
 
 	length := len(vf.Formats)
-	if length <= 1 {
+	if length <= 0 {
 		return nil
 	}
 
@@ -187,9 +190,7 @@ func (vf *ValueFormat) MatchFormat(parent interface{}, data interface{}) (*Value
 	if length == 0 {
 		return vf, nil
 	}
-	if length == 1 {
-		return vf.Formats[0], nil
-	}
+
 	if vf.MatchFunc == nil {
 		return nil, errors.New(" lack of match function")
 	}
@@ -203,13 +204,19 @@ func FormatTypes(format *ValueFormat, _type string) error {
 	return nil
 }
 
-func FormatEnum(format *ValueFormat, data interface{}) error {
+func FormatEnum(format *ValueFormat, data interface{}, _type string) error {
+	if _type != STRING && _type != NUMBER {
+		return nil
+	}
+
 	if len(format.Enum) <= 0 {
 		return nil
 	}
+
 	if format.EnumFunc == nil {
 		return errors.New(" Enum func is not init")
 	}
+
 	exist := format.EnumFunc(data)
 	if !exist {
 		return fmt.Errorf(" value is not in Enum %s", format.EnumStr)
@@ -218,42 +225,18 @@ func FormatEnum(format *ValueFormat, data interface{}) error {
 }
 
 func (vf *ValueFormat) BoolFormat(data bool, format *ValueFormat) (interface{}, error) {
-	err := FormatTypes(format, BOOL)
-	if err != nil {
-		return nil, err
-	}
 	return data, nil
 }
 
 func (vf *ValueFormat) NumberFormat(data interface{}, format *ValueFormat) (interface{}, error) {
-	err := FormatTypes(format, NUMBER)
-	if err != nil {
-		return nil, err
-	}
-	err = FormatEnum(format, data)
-	if err != nil {
-		return nil, err
-	}
 	return data, nil
 }
 
 func (vf *ValueFormat) StringFormat(data string, format *ValueFormat) (interface{}, error) {
-	err := FormatTypes(format, STRING)
-	if err != nil {
-		return nil, err
-	}
-	err = FormatEnum(format, data)
-	if err != nil {
-		return nil, err
-	}
 	return data, nil
 }
 
 func (vf *ValueFormat) ArrayFormat(data []interface{}, format *ValueFormat) (interface{}, error) {
-	err := FormatTypes(format, ARRAY)
-	if err != nil {
-		return nil, err
-	}
 	if format.Format == nil {
 		return nil, errors.New(" array format is empty")
 	}
@@ -262,6 +245,9 @@ func (vf *ValueFormat) ArrayFormat(data []interface{}, format *ValueFormat) (int
 	for i, d := range data {
 		value, err := format.Format.format(data, d)
 		if err != nil {
+			if vf.IsFilter {
+				continue
+			}
 			return nil, fmt.Errorf(".$%d%s", i, err.Error())
 		}
 		res = append(res, value)
@@ -270,10 +256,6 @@ func (vf *ValueFormat) ArrayFormat(data []interface{}, format *ValueFormat) (int
 }
 
 func (vf *ValueFormat) MapFormat(data map[string]interface{}, format *ValueFormat) (interface{}, error) {
-	err := FormatTypes(format, MAP)
-	if err != nil {
-		return nil, err
-	}
 	var res = data
 	if format.IsFilter {
 		res = make(map[string]interface{}, len(data))
@@ -315,6 +297,20 @@ func (vf *ValueFormat) format(parent interface{}, data interface{}) (interface{}
 	if err != nil {
 		return nil, err
 	}
+
+	// type
+	t := typeOf(data)
+	err = FormatTypes(format, t)
+	if err != nil {
+		return nil, err
+	}
+
+	// enum
+	err = FormatEnum(format, data, t)
+	if err != nil {
+		return nil, err
+	}
+
 	switch value := data.(type) {
 	case string:
 		return vf.StringFormat(value, format)
