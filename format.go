@@ -13,7 +13,8 @@ type Match struct {
 }
 
 type BasicType struct {
-	Type string `json:"type"`
+	Type       string `json:"type"`
+	IsToString bool   `json:"toString"`
 
 	// string and number
 	Enum     []interface{} `json:"enum"`
@@ -309,6 +310,10 @@ func (vf *ValueFormat) format(parent interface{}, data interface{}) (interface{}
 	err = FormatEnum(format, data, t)
 	if err != nil {
 		return nil, err
+	}
+
+	if format.IsToString {
+		return toString(data)
 	}
 
 	switch value := data.(type) {

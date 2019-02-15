@@ -1,6 +1,7 @@
 package format
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 )
@@ -632,4 +633,42 @@ func TestFomaterMapGetFormatSuccess(t *testing.T) {
 	if err != nil {
 		t.Error(err.Error())
 	}
+}
+
+func TestFomaterToStringSuccess(t *testing.T) {
+	formatStr := `{
+		"type": "map",
+		"fields": {
+			"n": {
+				"toString": true,
+				"type": "number"
+			},
+			"b": {
+				"toString": true,
+				"type": "bool"
+			},
+			"s": {
+				"toString": true,
+				"type": "string"
+			}
+		}
+	}`
+	f, err := NewFormater(formatStr)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	data := map[string]interface{}{"n": 111, "s": "test", "b": true}
+	res, err := f.FormatData(data)
+	if err != nil {
+		t.Error(err.Error())
+	}
+	bs, err := json.Marshal(res)
+	if err != nil {
+		t.Error(err.Error())
+	}
+	if string(bs) != `{"b":"true","n":"111","s":"test"}` {
+		t.Error("toString errror")
+	}
+	return
 }
